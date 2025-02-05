@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Добавление Продукта</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;  /* Changed width to 900px */
+      background-color: #ffffff;
+      padding: 30px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    label {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="checkbox"],
+    textarea,
+    select,
+    input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    textarea {
+      resize: none;
+    }
+
+    button {
+      background-color: #e74c3c;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #d62c1a;
+    }
+
+    .image-preview {
+      width: 100%;
+      height: auto;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .button-group {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Добавление Продукта</h1>
+  <form method="post" action="/adminka_ice_cream" enctype="multipart/form-data">
+
+    <label for="title">Название</label>
+    <input type="text" id="title" name="title" placeholder="Введите название продукта">
+
+    <label for="short-info">Краткое Описание</label>
+    <textarea id="short-info" name="short-info" rows="3" placeholder="Введите краткое описание"></textarea>
+
+    <label for="description">Описание</label>
+    <textarea id="description" name="description" rows="5" placeholder="Введите полное описание"></textarea>
+
+    <label for="price">Цена</label>
+    <input type="number" id="price" name="price" placeholder="Введите цену">
+
+    <label for="currency">Валюта</label>
+    <select id="currency" name="currency">
+      <option value="usd">USD</option>
+      <option value="eur">EUR</option>
+      <option value="rub">RUB</option>
+      <option value="kgs">KGS</option>
+    </select>
+
+    <label for="old-price">Старая цена</label>
+    <input type="number" id="old-price" name="old-price" placeholder="Введите старую цену (если есть)">
+
+    <label for="sku">Артикул (SKU)</label>
+    <input type="text" id="sku" name="sku" placeholder="Введите артикул">
+
+    <label for="out-of-stock">Нет в наличии</label>
+    <input type="checkbox" id="out-of-stock" name="out-of-stock">
+
+    <label for="featured">Рекомендуемый товар</label>
+    <input type="checkbox" id="featured" name="featured">
+
+    <label for="categories">Категории</label>
+    <select id="categories" name="categories">
+      <option value="ice">Морожное</option>
+      <option value="kurut">Куруты</option>
+      <option value="kefir">Кефиры</option>
+    </select>
+
+    <label for="image">Изображение</label>
+    <input type="file" id="image" name="image" accept="image/*" onchange="previewImage(event)">
+    <img id="image-preview" class="image-preview" src="#" alt="Предпросмотр изображения">
+
+    <div class="button-group">
+      <button type="submit">Добавить продукт</button>
+      <button type="reset">Сбросить</button>
+    </div>
+  </form>
+</div>
+
+  <!-- Добавьте JavaScript здесь -->
+  <script>
+    // Конфигурация Firebase
+    const firebaseConfig = {
+    apiKey: "AIzaSyCa8zDoVo0icsBY5tzVfN01ziBMSpGlpG4",
+    authDomain: "icecream-985fd.firebaseapp.com",
+    databaseURL: "https://icecream-985fd-default-rtdb.firebaseio.com",
+    projectId: "icecream-985fd",
+    storageBucket: "icecream-985fd.firebasestorage.app",
+    messagingSenderId: "940824071758",
+    appId: "1:940824071758:web:88cae811da1b1dfa15bd1f",
+    measurementId: "G-T71DVHCZB9"
+  };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+</script>
+<script src="https://www.gstatic.com/firebasejs/9.14.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.14.0/firebase-storage.js"></script>
+
+
+<script>
+  document.querySelector('form').addEventListener('submit', async function (event) {
+    event.preventDefault();
+
+    // Получение значений полей формы
+    const title = document.getElementById('title').value;
+    const shortInfo = document.getElementById('short-info').value;
+    const description = document.getElementById('description').value;
+    const price = document.getElementById('price').value;
+    const currency = document.getElementById('currency').value;
+    const oldPrice = document.getElementById('old-price').value;
+    const sku = document.getElementById('sku').value;
+    const outOfStock = document.getElementById('out-of-stock').checked;
+    const featured = document.getElementById('featured').checked;
+    const category = document.getElementById('categories').value;
+    const imageUrl = document.getElementById('image').files[0];
+
+    if (!imageUrl) {
+      alert('Пожалуйста, выберите изображение.');
+      return;
+    }
+
+    try {
+      // Загрузка изображения в Firebase Storage
+      const storage = firebase.storage();
+      const storageRef = storage.ref('product-images/' + imageUrl.name);
+      const uploadTask = await storageRef.put(imageFile);
+
+      // Получение URL загруженного изображения
+      const imageUrl = await uploadTask.ref.getDownloadURL();
+
+      // Сохранение данных в Realtime Database
+      const newProductRef = firebase.database().ref('products').push();
+
+      await newProductRef.set({
+        title: title,
+        shortInfo: shortInfo,
+        description: description,
+        price: parseFloat(price),
+        currency: currency,
+        oldPrice: parseFloat(oldPrice),
+        sku: sku,
+        outOfStock: outOfStock,
+        featured: featured,
+        category: category,
+        imageUrl: imageUrl // Ссылка на изображение
+      });
+
+      alert("Продукт успешно добавлен!");
+      document.querySelector('form').reset();
+      document.getElementById('image-preview').style.display = 'none';
+
+    } catch (error) {
+      alert("Ошибка при загрузке данных: " + error.message);
+    }
+  });
+
+</script>
+</body>
+</html>
