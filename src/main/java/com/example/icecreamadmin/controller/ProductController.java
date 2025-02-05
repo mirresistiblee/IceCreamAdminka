@@ -1,24 +1,33 @@
 package com.example.icecreamadmin.controller;
 
+import com.example.icecreamadmin.model.ProductEntity;
+import com.example.icecreamadmin.services.FirebaseServiceProduct;
+import com.example.icecreamadmin.services.modul.FileService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import com.example.icecreamadmin.services.CloudinaryService;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+
 
 @Controller
-@RequestMapping
 public class ProductController {
 
-    // Показать форму добавления продукта
+    private final FirebaseServiceProduct productFirebase = new FirebaseServiceProduct("news");
+
     @GetMapping("/adminka_ice_cream")
-    public String showAddProductForm(Model model) {
-        return "adminka_ice_cream"; // Возвращаем HTML-страницу с формой добавления продукта
+    public String getAdminkaIceCream(Model model) {
+        ThymleafUIModulProduct thymleafUIModul = new ThymleafUIModulProduct(model);
+        thymleafUIModul.showData(productFirebase);
+        return "adminka_ice_cream";
     }
 
-    // Обработать отправку формы добавления продукта
     @PostMapping("/adminka_ice_cream")
-    public String addProduct(
+    public String postAdminkaIceCream(
             @RequestParam("title") String title,
             @RequestParam("short-info") String shortInfo,
             @RequestParam("description") String description,
@@ -32,10 +41,41 @@ public class ProductController {
             @RequestParam("image") MultipartFile imageUrl,
             Model model) throws IOException {
 
-        // Добавляем сообщение об успешной обработке
-        model.addAttribute("message", "Продукт успешно добавлен!");
+        CloudinaryService cloudinaryService = new CloudinaryService();
+        List<String> imageLinks = new ArrayList<>();
 
-        return "redirect:/adminka_ice_cream"; // Перенаправляем на страницу добавления продукта
+        for (MultipartFile image : images) {
+            String imageLink = cloudinaryService.uploadCloudinary(FileService.convertMultipartFileToFile(image));
+            imageLinks.add(imageLink);
+        }
+
+        ProductEntity productEntity = new ProductEntity(
+    public ProductEntity(title, shortInfo, description, price, currency,  oldPrice,  sku,  outOfStock, featured,  categories,  imageUrl);
+        System.out.println(type);
+
+        if (type.equals("none")) {
+            productFirebase.saveProduct(productEntity);
+        } else {
+            productFirebase.updateByKey(type, productEntity);
+        }
+
+        ThymleafUIModulProduct thymleafUIModul = new ThymleafUIModulProduct(model);
+        thymleafUIModul.showData(productFirebase);
+
+        return "redirect:/adminka_ice_cream";
+    }
+
+    @PostMapping("/updateProduct")
+    public String updateIceCream(@RequestParam("update_key") String update_key, Model model) {
+        ThymleafUIModulProduct thymleafUIModul = new ThymleafUIModulProduct(model);
+        thymleafUIModul.updateShow(productFirebase, update_key);
+        return "adminka_ice_cream";
+    }
+
+    @PostMapping("/deleteProduct")
+    public String deleteIceCream(@RequestParam("delete_key") String delete_key) {
+        productFirebase.deleteByKey(delete_key);
+        return "redirect:/adminka_ice_cream";
     }
 }
 
